@@ -53,6 +53,46 @@ function chanceCrash() {
     return false;
 }
 
+/* AUDIO WORKAROUND */
+    <div id="nowPlaying" style="position:absolute; top:10px; left:10px; color:#00ff88; font-family:monospace;">
+Playing: None
+</div>
+
+<audio id="bgMusic"></audio>
+
+<script>
+const tracks = [
+    "audio/background/Feel Good - Syn Cole.mp3",
+    "audio/background/Flashback - Frizk.mp3",
+    "audio/background/Out of Thin Air - AZALI.mp3",
+    "audio/background/We Are Number One.mp3"
+];
+
+let currentTrack = 0;
+const player = document.getElementById("bgMusic");
+const nowPlaying = document.getElementById("nowPlaying");
+
+function getTrackName(path) {
+    let parts = path.split("/");
+    let fileName = parts[parts.length - 1];
+    return fileName.replace(".mp3","");
+}
+
+function playNextTrack() {
+    player.src = tracks[currentTrack];
+    nowPlaying.innerText = "Playing: " + getTrackName(tracks[currentTrack]);
+    player.play().catch(()=>{}); // prevents autoplay errors
+
+    currentTrack++;
+    if (currentTrack >= tracks.length) currentTrack = 0; // loop
+}
+
+player.addEventListener("ended", playNextTrack);
+
+// start the first track
+playNextTrack();
+</script>
+    
 /* MAIN RENDER */
 function render() {
     let screen = document.getElementById("screen");
