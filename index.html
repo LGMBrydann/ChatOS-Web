@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ChatOS</title>
+
+<style>
+body {
+    background:black;
+    color:#00ff88;
+    font-family:monospace;
+    text-align:center;
+    overflow:hidden;
+}
+
+/* SCREEN */
+#screen {
+    margin-top:40px;
+    white-space:pre-line;
+    opacity:0;
+    transform:translateY(10px);
+    transition:all 0.4s ease;
+}
+
+#screen.show {
+    opacity:1;
+    transform:translateY(0);
+}
+
+/* BUTTONS */
+button {
+    background:black;
+    color:#00ff88;
+    border:1px solid #00ff88;
+    padding:8px;
+    margin:4px;
+    cursor:pointer;
+    transition:all 0.2s ease;
+}
+
+button:hover {
+    background:#00ff88;
+    color:black;
+    transform:scale(1.05);
+}
+
+button:active {
+    transform:scale(0.95);
+}
+
+/* PROFILE PIC */
+img {
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    border:2px solid #00ff88;
+    animation:fadeIn 1s ease;
+}
+
+@keyframes fadeIn {
+    from {opacity:0;}
+    to {opacity:1;}
+}
+</style>
+</head>
+
+<body>
+
+<h2>ChatOS</h2>
+<p>
+ChatOS the custom OS made by univ3r5e<br>
+Made a website (with love) by Yeeter &lt;3
+</p>
+
+<audio id="startupSound" src="startup.mp3"></audio>
+
+<div id="screen"></div>
+<div id="buttons"></div>
+
+<script>
+let state = 0; // 0 setup, -1 login
+let clicks = 0;
+let wifi = true;
+let crashChance = 5;
+
+let user = JSON.parse(localStorage.getItem("chatos_user"));
+
+/* SETUP */
+function renderSetup() {
+    document.getElementById("screen").innerHTML =
+        "Welcome to ChatOS Setup<br><br>" +
+        "Enter Username:<br><input id='name'><br><br>" +
+        "Profile Picture URL:<br><input id='pfp'><br><br>" +
+        "<button onclick='finishSetup()'>Finish</button>";
+    document.getElementById("buttons").innerHTML = "";
+}
+
+function finishSetup() {
+    let name = document.getElementById("name").value || "User";
+    let pfp = document.getElementById("pfp").value || "";
+    user = {name, pfp};
+    localStorage.setItem("chatos_user", JSON.stringify(user));
+    state = -1;
+    render();
+}
+
+/* LOGIN */
+function renderLogin() {
+    document.getElementById("buttons").innerHTML = "";
+    document.getElementById("screen").innerHTML =
+        (user.pfp ? `<img src="${user.pfp}"><br>` : "") +
+        `<h3>${user.name}</h3>` +
+        "<button onclick='startOS()'>Login</button>";
+}
+
+function startOS() {
+    state = 1;
+    render();
+}
+
+/* CRASH */
+function chanceCrash() {
+    if (Math.random()*100 < crashChance) {
+        state = 12;
+        render();
+        return true;
+    }
+    return false;
+}
+
+/* MAIN RENDER */
+function render() {
+    let screen = document.getElementById("screen");
+    let buttons = document.getElementById("buttons");
+
+    /* FADE OUT */
+    screen.classList.remove("show");
+    buttons.innerHTML = "";
+
+    if (!user) return renderSetup();
+    if (state === -1) return renderLogin();
+
+    if (state === 1) {
+        document.getElementById("startupSound").play();
+
+        screen.innerText =
+        "--------------------ChatOS------------------------\n" +
+        "-The custom OS made by univ3r5e!-\n" +
+        "-------------------Starting...----------------------";
+
+        setTimeout(()=>{state=2; render();},1500);
+    }
+
+    else if (state === 2) {
+        screen.innerText =
+        "Menu\n\n1 - Games\n2 - Settings\n3 - Other\n4 - Update Log\n5 - Apps\n6 - Wifi ("+(wifi?"ON":"OFF")+")";
+
+        addBtn("Games", ()=>go(3));
+        addBtn("Settings", ()=>go(11));
+        addBtn("Other", ()=>go(5));
+        addBtn("Update Log", ()=>go(8));
+        addBtn("Apps", ()=>go(13));
+        addBtn("Toggle Wifi", ()=>{wifi=!wifi; render();});
+    }
+
+    else if (state === 3) {
+        screen.innerText = "Games\n1 - Clicker\n2 - Dice\n3 - Back";
+        addBtn("Clicker", ()=>go(4));
+        addBtn("Dice", ()=>go(10));
+        addBtn("Back", ()=>go(2));
+    }
+
+    else if (state === 4) {
+        screen.innerText = "Clicker\n\n[🟥]\nClicks: "+clicks;
+        addBtn("Click", ()=>{clicks++; render();});
+        addBtn("Back", ()=>go(3));
+    }
+
+    else if (state === 5) {
+        screen.innerText = "Other\n1 - Commands\n2 - Command Prompt\n3 - Back";
+        addBtn("Commands", ()=>go(7));
+        addBtn("Command Prompt", ()=>go(9));
+        addBtn("Back", ()=>go(2));
+    }
+
+    else if (state === 7) {
+        screen.innerText = "/start [number]\n/stop\n/goto [number]";
+        addBtn("Back", ()=>go(5));
+    }
+
+    else if (state === 8) {
+        screen.innerText = "Update Log\n\nV1.1 / 15/1/2026\nAdded BIT-3 & BIT-3 mini";
+        addBtn("Back", ()=>go(2));
+    }
+
+    else if (state === 9) {
+        screen.innerHTML = "Command Prompt<br><input id='cmd'><button onclick='runCmd()'>Run</button>";
+    }
+
+    else if (state === 10) {
+        let roll = Math.floor(Math.random()*1000)+1;
+        screen.innerText = "Dice\nNumber: "+roll;
+        addBtn("Reroll", ()=>render());
+        addBtn("Back", ()=>go(3));
+    }
+
+    else if (state === 11) {
+        screen.innerText = "Settings\n1 - Reset Clicker";
+        addBtn("Reset Clicker", ()=>{
+            if (confirm("Are you sure?")) {
+                clicks = 0;
+                render();
+            }
+        });
+        addBtn("Back", ()=>go(2));
+    }
+
+    else if (state === 12) {
+        screen.innerText = "ERROR: ChatOS has crashed.\nPress restart.";
+        addBtn("Restart", ()=>go(1));
+    }
+
+    else if (state === 13) {
+        screen.innerText = "Apps\n1 - Calculator\n2 - Notes\n3 - Browser\n4 - Back";
+        addBtn("Calculator", ()=>go(14));
+        addBtn("Notes", ()=>go(15));
+        addBtn("Browser", ()=>go(wifi?17:16));
+        addBtn("Back", ()=>go(2));
+    }
+
+    else if (state === 14) {
+        screen.innerHTML = "Calculator<br><input id='calc'><button onclick='calc()'>=</button><div id='ans'></div>";
+        addBtn("Back", ()=>go(13));
+    }
+
+    else if (state === 15) {
+        let notes = localStorage.getItem("notes") || "No notes.";
+        screen.innerText = "Notes:\n"+notes;
+        addBtn("Add Note", ()=>{
+            let n = prompt("Write note:");
+            if (n) localStorage.setItem("notes", n);
+            render();
+        });
+        addBtn("Back", ()=>go(13));
+    }
+
+    else if (state === 16) {
+        screen.innerText = "ERROR: Wifi isn't connected.";
+        addBtn("Back", ()=>go(13));
+    }
+
+    else if (state === 17) {
+        screen.innerText = "Browser\n1 - chatbitplusfree.com\n2 - Back";
+        addBtn("Open site", ()=>{
+            crashChance = 50;
+            go(18);
+        });
+        addBtn("Back", ()=>go(13));
+    }
+
+    else if (state === 18) {
+        screen.innerText = "your ChatOS has been hacked teeheehee";
+        addBtn("Back", ()=>go(17));
+    }
+
+    /* FADE IN */
+    setTimeout(()=>{screen.classList.add("show");},50);
+}
+
+/* HELPERS */
+function addBtn(text, fn) {
+    let b = document.createElement("button");
+    b.innerText = text;
+    b.onclick = ()=>{
+        if (!chanceCrash()) fn();
+    };
+    document.getElementById("buttons").appendChild(b);
+}
+
+function go(n) {
+    state = n;
+    render();
+}
+
+function runCmd() {
+    let cmd = document.getElementById("cmd").value;
+
+    if (cmd === "crash") state = 12;
+
+    if (cmd.startsWith("crashchances=")) {
+        crashChance = parseInt(cmd.split("=")[1]);
+    }
+
+    render();
+}
+
+function calc() {
+    let val = document.getElementById("calc").value;
+    document.getElementById("ans").innerText = eval(val);
+}
+
+render();
+</script>
+
+</body>
+</html>
